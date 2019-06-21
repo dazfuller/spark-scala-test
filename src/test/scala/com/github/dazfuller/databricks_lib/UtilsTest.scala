@@ -3,11 +3,15 @@ package com.github.dazfuller.databricks_lib
 import java.sql.Timestamp
 
 import com.holdenkarau.spark.testing.SharedSparkContext
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.joda.time.DateTime
 import org.scalatest.FunSuite
 
 class UtilsTest extends FunSuite with SharedSparkContext {
+  // Disable INFO logging to de-clutter output
+  Logger.getRootLogger.setLevel(Level.WARN)
+
   val cols = List("id", "pk_field", "value", "last_modified")
 
   test("test initializing spark context") {
@@ -32,13 +36,13 @@ class UtilsTest extends FunSuite with SharedSparkContext {
       (1, 1L, 1.0, new Timestamp(startDate.getMillis)),
       (2, 1L, 2.0, new Timestamp(startDate.plusDays(1).getMillis)),
       (3, 1L, 3.0, new Timestamp(startDate.plusDays(2).getMillis)),
-      (4, 1L, 4.0, new Timestamp(startDate.plusDays(3).getMillis))
+      (4, 1L, 4.0, new Timestamp(startDate.minusDays(3).getMillis))
     ).toDF(this.cols: _*)
 
     val utils = new Utils(spark)
     val latest = utils.latestRecords(df, "pk_field", "last_modified")
 
     assert(latest.count == 1)
-    assert(latest.head.getInt(0) == 4)
+    assert(latest.head.getInt(0) == 3)
   }
 }
