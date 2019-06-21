@@ -6,9 +6,9 @@ import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.joda.time.DateTime
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 
-class UtilsTest extends FunSuite with SharedSparkContext {
+class UtilsTest extends FunSuite with SharedSparkContext with Matchers {
   // Disable INFO logging to de-clutter output
   Logger.getRootLogger.setLevel(Level.WARN)
 
@@ -23,7 +23,7 @@ class UtilsTest extends FunSuite with SharedSparkContext {
       (4, 5, 6)
     ).toDF("col1", "col2", "col3")
 
-    assert(data.count() == 2)
+    data.count should be(2)
   }
 
   test("Only latest records should be left") {
@@ -42,7 +42,24 @@ class UtilsTest extends FunSuite with SharedSparkContext {
     val utils = new Utils(spark)
     val latest = utils.latestRecords(df, "pk_field", "last_modified")
 
-    assert(latest.count == 1)
-    assert(latest.head.getInt(0) == 3)
+    latest.count should be(1)
+    latest.head.getInt(0) should be(3)
+  }
+
+  test("Utils should use default spark value") {
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+
+    val startDate = new DateTime(2019, 2, 13, 10, 10)
+
+    val df = Seq(
+      (1, 1L, 1.0, new Timestamp(startDate.getMillis)),
+      (2, 1L, 2.0, new Timestamp(startDate.plusDays(1).getMillis))
+    ).toDF(this.cols: _*)
+
+    val utils = new Utils()
+    val latest = utils.latestRecords(df, "pk_field", "last_modified")
+
+    latest.count should be(1)
   }
 }
