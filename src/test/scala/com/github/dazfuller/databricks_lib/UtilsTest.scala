@@ -62,4 +62,32 @@ class UtilsTest extends FunSuite with SharedSparkContext with Matchers {
 
     latest.count should be(1)
   }
+
+  test("Providing an invalid identifier column throws an error") {
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+
+    val df = Seq(
+      (1, 2, 3)
+    ).toDF("a", "b", "c")
+
+    val utils = new Utils()
+
+    val thrown = the[IllegalArgumentException] thrownBy utils.latestRecords(df, "d", "c")
+    thrown.getMessage should startWith("Identifier column 'd'")
+  }
+
+  test("Providing an invalid change order column throws an error") {
+    val spark = SparkSession.builder().getOrCreate()
+    import spark.implicits._
+
+    val df = Seq(
+      (1, 2, 3)
+    ).toDF("a", "b", "c")
+
+    val utils = new Utils()
+
+    val thrown = the[IllegalArgumentException] thrownBy utils.latestRecords(df, "c", "Timestamp")
+    thrown.getMessage should startWith("Change order column 'Timestamp'")
+  }
 }

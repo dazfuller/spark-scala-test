@@ -16,12 +16,18 @@ class Utils(spark: SparkSession = SparkSession.builder().getOrCreate()) {
   /**
     * Filters a data frame to return only the latest records
     *
-    * @param df              The data frame to filter
-    * @param idColumn        the name of the column containing the primary identifier (key) in the data frame
-    * @param timestampColumn name of the column which identifies the date and time of the change
+    * @param df                The data frame to filter
+    * @param idColumn          the name of the column containing the primary identifier (key) in the data frame
+    * @param changeOrderColumn name of the column which identifies the date and time of the change
     */
-  def latestRecords(df: DataFrame, idColumn: String, timestampColumn: String): DataFrame = {
-    val recordWindow = Window.partitionBy(col(idColumn)).orderBy(col(timestampColumn).desc)
+  def latestRecords(df: DataFrame, idColumn: String, changeOrderColumn: String): DataFrame = {
+    if (!df.columns.contains(idColumn)) {
+      throw new IllegalArgumentException(s"Identifier column '$idColumn' not found in DataFrame")
+    } else if (!df.columns.contains(changeOrderColumn)) {
+      throw new IllegalArgumentException(s"Change order column '$changeOrderColumn' not found in DataFrame")
+    }
+
+    val recordWindow = Window.partitionBy(col(idColumn)).orderBy(col(changeOrderColumn).desc)
 
     val latest = df
       .withColumn("window_rank", row_number().over(recordWindow))
