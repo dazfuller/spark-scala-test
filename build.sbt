@@ -11,6 +11,9 @@ val scalaTestVersion = "3.0.8"
 
 parallelExecution in Test := false
 
+fork in Test := true
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:MaxPermSize=2048M", "-XX:+CMSClassUnloadingEnabled")
+
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion % "provided"
